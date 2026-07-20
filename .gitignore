@@ -11,3 +11,6 @@ wheels/
 
 # SQLite
 db.sqlite3
+
+# ruff cache
+.ruff_cache
