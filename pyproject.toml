@@ -1,0 +1,11 @@
+[project]
+name = "fuel-assessment"
+version = "0.1.0"
+description = "Assessment for fuel consumption and efficiency"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=6.0.7",
+    "djangorestframework>=3.17.1",
+    "drf-spectacular>=0.30.0",
+]
