@@ -8,4 +8,7 @@ dependencies = [
     "django>=6.0.7",
     "djangorestframework>=3.17.1",
     "drf-spectacular>=0.30.0",
+    "psycopg2-binary>=2.9.12",
+    "python-dotenv>=1.2.2",
+    "requests>=2.34.2",
 ]

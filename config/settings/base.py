@@ -3,10 +3,13 @@ Shared Django settings for Fuel_Assessment.
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = "django-insecure-wvxc+3fjbw*8oai1n#4us%rw@tt8o)qxdqqu52n(x7lr0q^fhr"
 
@@ -19,7 +22,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Custom apps
     "apps.fuel.apps.FuelConfig",
-
     # Packages
     "rest_framework",
     "drf_spectacular",
@@ -56,8 +58,12 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB", "fuel_assessment"),
+        "USER": os.environ.get("POSTGRES_USER", "postgres"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "postgres"),
+        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
 }
 
