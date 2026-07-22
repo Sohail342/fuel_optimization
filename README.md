@@ -1,5 +1,7 @@
 # Fuel Assessment API
 
+![Route Fuel Stop Cost flow](docs/Route%20Fuel%20Stop%20Cost.png)
+
 This project is configured to run with Docker only. On Windows, a local non-Docker setup is not supported because the PostGIS/GeoDjango stack depends on native C++ build components that are not available in this environment.
 
 ## Prerequisites
@@ -39,6 +41,27 @@ Once the containers are running, the API will be available at:
 ```text
 http://localhost:8000
 ```
+
+## Route planning API
+
+Prefer **POST** with JSON so you can type spaces normally (no `%20`):
+
+```bash
+curl -X POST "http://localhost:8000/api/route-planning/" \
+  -H "Content-Type: application/json" \
+  -d "{\"start\": \"Houston, TX\", \"end\": \"Chicago, IL\"}"
+```
+
+Body:
+
+```json
+{
+  "start": "Houston, TX",
+  "end": "Chicago, IL"
+}
+```
+
+`GET` still works for simple cases, but browsers/clients must URL-encode query strings. Swagger UI: `http://localhost:8000/api/docs/`
 
 ## Import fuel station data
 

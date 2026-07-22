@@ -61,12 +61,17 @@ class RouteCache(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["start", "destination"],
                 name="unique_cached_route",
             )
+        ]
+        indexes = [
+            models.Index(fields=["updated_at"]),
         ]
 
     def __str__(self):

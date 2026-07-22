@@ -1,5 +1,6 @@
 import csv
 import time
+from decimal import Decimal, InvalidOperation
 
 from django.contrib.gis.geos import Point
 from django.core.management.base import BaseCommand
@@ -16,51 +17,70 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         path = options["csv_file"]
+        imported = 0
+        skipped = 0
 
-        with open(path, newline="", encoding="utf-8") as csvfile:
-
+        with open(path, newline="", encoding="utf-8-sig") as csvfile:
             reader = csv.DictReader(csvfile)
 
             for row in reader:
+                row = {key.strip(): (value or "").strip() for key, value in row.items()}
 
-                address = (
-                    f'{row["Address"]}, '
-                    f'{row["City"]}, '
-                    f'{row["State"]}'
-                )
+                opis_id = row.get("OPIS Truckstop ID")
+                retail_price_raw = row.get("Retail Price")
+                address = f"{row.get('Address', '')}, {row.get('City', '')}, {row.get('State', '')}"
 
-                location = geocode(address)
-
-                if location is None:
+                if not opis_id:
+                    skipped += 1
                     self.stdout.write(
                         self.style.WARNING(
-                            f"Cannot geocode {address}"
+                            f"Skipping row with missing OPIS ID: {address}"
                         )
                     )
                     continue
 
-                lat, lon = location
+                try:
+                    retail_price = Decimal(retail_price_raw)
+                except (InvalidOperation, TypeError):
+                    skipped += 1
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"Skipping row with invalid retail price: {address}"
+                        )
+                    )
+                    continue
 
+                rack_id_raw = row.get("Rack ID")
+                rack_id = int(rack_id_raw) if rack_id_raw else None
+
+                location = geocode(address)
+                if location is None:
+                    skipped += 1
+                    self.stdout.write(self.style.WARNING(f"Cannot geocode {address}"))
+                    continue
+
+                lat, lon = location
                 FuelStation.objects.update_or_create(
-                    opis_id=row["OPIS Truckstop ID"],
+                    opis_id=int(opis_id),
                     defaults={
-                        "truckstop_name": row["Truckstop Name"],
-                        "address": row["Address"],
-                        "city": row["City"],
-                        "state": row["State"],
-                        "rack_id": row["Rack ID"] or None,
-                        "retail_price": row["Retail Price"],
-                        "location": Point(
-                            lon,
-                            lat,
-                            srid=4326,
-                        ),
+                        "truckstop_name": row.get("Truckstop Name", ""),
+                        "address": row.get("Address", ""),
+                        "city": row.get("City", ""),
+                        "state": row.get("State", ""),
+                        "rack_id": rack_id,
+                        "retail_price": retail_price,
+                        "location": Point(lon, lat, srid=4326),
                     },
                 )
 
-                self.stdout.write(
-                    self.style.SUCCESS(address)
-                )
+                imported += 1
+                self.stdout.write(self.style.SUCCESS(address))
 
-                # Considering rate limit from openstreetmap
+                # Respect geocoder rate limits
                 time.sleep(2)
+
+        self.stdout.write(
+            self.style.NOTICE(
+                f"Import finished. Imported={imported}, skipped={skipped}"
+            )
+        )
