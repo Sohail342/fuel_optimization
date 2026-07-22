@@ -1,27 +1,21 @@
-import requests
+import os
+import googlemaps
 
-BASE_URL = "https://nominatim.openstreetmap.org/search"
+API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 
 
 def geocode(address: str):
-    response = requests.get(
-        BASE_URL,
-        params={
-            "q": address,
-            "format": "json",
-            "limit": 1,
-        },
-        timeout=30,
-    )
+    if not API_KEY:
+        raise ValueError("GOOGLE_MAPS_API_KEY is not set in environment variables.")
 
-    response.raise_for_status()
+    gmaps = googlemaps.Client(key=API_KEY)
 
-    data = response.json()
+    # Perform forward geocoding with US region biasing
+    results = gmaps.geocode(address, region="us")
 
-    if not data:
+    if not results:
         return None
 
-    return (
-        float(data[0]["lat"]),
-        float(data[0]["lon"]),
-    )
+    # Retrieve coordinates from the top match
+    location = results[0]["geometry"]["location"]
+    return float(location["lat"]), float(location["lng"])
